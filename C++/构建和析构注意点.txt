@@ -1,0 +1,73 @@
+注意点1： (new, delete),(malloc, free)配套使用
+//delete函数先调用析构函数，再调用free函数，new和delete要配套使用，malloc和free同样也是需要配套使用
+
+我们知道string A,不管A里面的字符长度是多少，sizeof(A) = 4 总是成立的,所以，如果类CLS中含有string类型的成员变量，new了之后，一定要调用delete,而不是
+调用free,因为free只会释放CLS的空间，并不是释放string里面的空间。
+
+我猜测string内部是用一个指针来实现的，所以只会让这个指针为0，而不是去释放这个指针。
+class A{
+  string str;
+}
+
+A *p = new A();
+free(p);
+如果直接free指针p,则不会调用A的析构函数，就只直接释放内存，当然就不会调用成员变量string str的析构函数，所以str就会内存泄漏了。
+
+
+
+注意点2： 析构顺序问题
+（1）先调用子类析构函数，再调用父类析构函数
+（2）先调用该类的析构函数，在调用类成员的析构函数//这个我觉得主要是因为析构顺序和构造顺序相反
+还是看代码吧：
+class XXX{
+public:
+    XXX(){cout << "XXX" << endl;}
+    ~XXX(){cout << "~XXX" << endl;};
+public:
+    int a;
+    int b;
+};
+
+class YYY{
+public:
+    YYY(){cout << "YYY" <<endl;}
+    ~YYY(){cout << "~YYY" << endl;};
+};
+
+class ZZZ:public YYY{
+public:
+    ZZZ(){cout << "ZZZ" <<endl;}
+    ~ZZZ(){cout << "~ZZZ" << endl;};
+public:
+    XXX x;
+};
+
+int main()
+{
+  ZZZ z;
+  return 0;
+}
+
+输出结果为：
+YYY
+XXX
+ZZZ
+~ZZZ
+~XXX
+~YYY
+ 综上可得：构造顺序为：父类-子类中的成员变量-子类
+ 
+ 一个比较好记的方式：
+ 先构造成员变量，再构造自己
+ 先构造父类，再构造自己
+ 父类可以看做自己的第一个成员变量。
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
